@@ -1920,8 +1920,15 @@ struct VResizeLinear<uchar, int, short, FixedPtCast<int, uchar, INTER_RESIZE_COE
             dst[x+1] = uchar(( ((b0 * (S0[x+1] >> 4)) >> 16) + ((b1 * (S1[x+1] >> 4)) >> 16) + 2)>>2);
             dst[x+2] = uchar(( ((b0 * (S0[x+2] >> 4)) >> 16) + ((b1 * (S1[x+2] >> 4)) >> 16) + 2)>>2);
             dst[x+3] = uchar(( ((b0 * (S0[x+3] >> 4)) >> 16) + ((b1 * (S1[x+3] >> 4)) >> 16) + 2)>>2);
+            // printf("h: %d, %d\n", S0[x+0], S1[x+0]);
+            // printf("h: %d, %d\n", S0[x+1], S1[x+1]);
+            // printf("h: %d, %d\n", S0[x+2], S1[x+2]);
+            // printf("h: %d, %d\n", S0[x+3], S1[x+3]);
         }
         #endif
+        for(auto i = 0; i < width; i++) {
+            printf("mu--> 2 : %d : %d, %d\n", i, S0[i], S1[i]);
+        }
         for( ; x < width; x++ )
             dst[x] = uchar(( ((b0 * (S0[x] >> 4)) >> 16) + ((b1 * (S1[x] >> 4)) >> 16) + 2)>>2);
     }
@@ -3978,6 +3985,7 @@ void resize(int src_type,
         {
             cbuf[0] = 1.f - fx;
             cbuf[1] = fx;
+            printf("%f, %d\n", fx, *((uint32_t *)&fx));
         }
         if( fixpt )
         {
@@ -3985,6 +3993,8 @@ void resize(int src_type,
                 ialpha[dx*cn*ksize + k] = saturate_cast<short>(cbuf[k]*INTER_RESIZE_COEF_SCALE);
             for( ; k < cn*ksize; k++ )
                 ialpha[dx*cn*ksize + k] = ialpha[dx*cn*ksize + k - ksize];
+
+            printf("w : %d. (%d, %d), (%f, %f)\n",  xofs[dx*cn], ialpha[dx*cn*ksize], ialpha[dx*cn*ksize + 1], cbuf[0], cbuf[1]);
         }
         else
         {
@@ -4025,6 +4035,8 @@ void resize(int src_type,
         {
             for( k = 0; k < ksize; k++ )
                 ibeta[dy*ksize + k] = saturate_cast<short>(cbuf[k]*INTER_RESIZE_COEF_SCALE);
+                
+            printf("h : %d. (%d, %d), (%f, %f)\n", yofs[dy], ibeta[dy*ksize], ibeta[dy*ksize + 1], cbuf[0], cbuf[1]);
         }
         else
         {
@@ -4045,6 +4057,7 @@ void resize(int src_type,
 void cv::resize( InputArray _src, OutputArray _dst, Size dsize,
                  double inv_scale_x, double inv_scale_y, int interpolation )
 {
+    printf("%s, %d\n", __FUNCTION__, __LINE__);
     CV_INSTRUMENT_REGION();
 
     Size ssize = _src.size();
@@ -4064,12 +4077,14 @@ void cv::resize( InputArray _src, OutputArray _dst, Size dsize,
         CV_Assert(inv_scale_x > 0); CV_Assert(inv_scale_y > 0);
     }
 
+    printf("%s, %d\n", __FUNCTION__, __LINE__);
     if (interpolation == INTER_LINEAR_EXACT && (_src.depth() == CV_32F || _src.depth() == CV_64F))
         interpolation = INTER_LINEAR; // If depth isn't supported fallback to generic resize
 
     CV_OCL_RUN(_src.dims() <= 2 && _dst.isUMat() && _src.cols() > 10 && _src.rows() > 10,
                ocl_resize(_src, _dst, dsize, inv_scale_x, inv_scale_y, interpolation))
 
+    printf("%s, %d\n", __FUNCTION__, __LINE__);
     // Fake reference to source. Resolves issue 13577 in case of src == dst.
     UMat srcUMat;
     if (_src.isUMat())
@@ -4086,6 +4101,7 @@ void cv::resize( InputArray _src, OutputArray _dst, Size dsize,
         return;
     }
 
+    printf("%s, %d\n", __FUNCTION__, __LINE__);
     hal::resize(src.type(), src.data, src.step, src.cols, src.rows, dst.data, dst.step, dst.cols, dst.rows, inv_scale_x, inv_scale_y, interpolation);
 }
 

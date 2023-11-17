@@ -18,6 +18,7 @@ bin/
 *.rule
 *.tmp
 */debug
+opencv-*
 *.suo
 *.log
 *.tlog
